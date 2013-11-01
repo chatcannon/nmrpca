@@ -7,6 +7,7 @@ Created on Wed Oct 30 17:50:43 2013
 
 import numpy as np
 
+
 def nmr_flatten(nmrdata):
     """Convert an array of NMR data to a form suitable for PCA analysis
 
@@ -22,11 +23,13 @@ def nmr_flatten(nmrdata):
 
     # Convert the complex NMR data into a 'real' array twice the size
     # Just do it the simple way for now, there is a way to do it in place
-    nmrdata = np.concatenate(nmrdata.real, nmrdata.imag, axis=0)
+    nmrdata = np.concatenate((nmrdata.real, nmrdata.imag), axis=0)
 
     # Flatten the second and subsequent dimensions of the NMR data
     nmrdata = np.reshape(nmrdata, (nmrdata.shape[0],
                                    np.prod(nmrdata.shape[1:])))
+    
+    return nmrdata
 
 
 def nmr_rebuild(nmrdata):
@@ -38,3 +41,5 @@ def nmr_rebuild(nmrdata):
 
     npts = nmrdata.shape[0] / 2
     nmrdata = nmrdata[:npts, :] + 1j * nmrdata[npts:, :]
+    
+    return nmrdata
