@@ -20,7 +20,7 @@ class TestFlatten(unittest.TestCase):
 
         rarray = nmrpca.nmr_flatten(carray)
 
-        self.assertEqual((4, 3), tuple(rarray.shape))
+        self.assertEqual((3, 4), tuple(rarray.shape))
         self.assertEqual(np.dtype('f4'), rarray.dtype)
 
     def test_double(self):
@@ -28,7 +28,7 @@ class TestFlatten(unittest.TestCase):
 
         rarray = nmrpca.nmr_flatten(carray)
 
-        self.assertEqual((4, 3), tuple(rarray.shape))
+        self.assertEqual((3, 4), tuple(rarray.shape))
         self.assertEqual(np.dtype('f8'), rarray.dtype)
 
     def test_flatten(self):
@@ -36,7 +36,7 @@ class TestFlatten(unittest.TestCase):
 
         rarray = nmrpca.nmr_flatten(carray)
 
-        self.assertEqual((4, 12), tuple(rarray.shape))
+        self.assertEqual((12, 4), tuple(rarray.shape))
 
     def test_rebuild(self):
         realpart = np.random.rand(5, 4, 3)
@@ -48,6 +48,17 @@ class TestFlatten(unittest.TestCase):
         carray2 = nmrpca.nmr_rebuild(rarray)
 
         assert_array_equal(carray2, np.reshape(carray, (5, 12)))
+
+    def test_rebuild_reshape(self):
+        realpart = np.random.rand(5, 4, 3)
+        imagpart = np.random.rand(5, 4, 3)
+
+        carray = realpart + 1j * imagpart
+
+        rarray = nmrpca.nmr_flatten(carray)
+        carray2 = nmrpca.nmr_rebuild(rarray, (4, 3))
+
+        assert_array_equal(carray2, carray)
 
 if __name__ == '__main__':
     unittest.main()
