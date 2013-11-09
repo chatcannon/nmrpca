@@ -40,7 +40,7 @@ def nmr_rebuild(nmrdata, sample_shape=None):
     data suitable for further processing e.g. by Fourier Transform
     """
 
-    npts = nmrdata.shape[1] / 2
+    npts = int(nmrdata.shape[1] / 2)  # Python 3 gives float, need int for numpy
     nmrdata = nmrdata.T[:npts, :] + 1j * nmrdata.T[npts:, :]
 
     if sample_shape is not None:
