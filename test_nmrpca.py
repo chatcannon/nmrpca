@@ -10,7 +10,10 @@ import unittest
 import numpy as np
 from numpy.testing.utils import assert_array_equal
 
-import nmrpca
+if __name__ == '__main__':
+    import utils
+else:  # nosetests etc
+    from . import utils
 
 
 class TestFlatten(unittest.TestCase):
@@ -18,7 +21,7 @@ class TestFlatten(unittest.TestCase):
     def test_single(self):
         carray = np.ones((2, 3), dtype='c8')
 
-        rarray = nmrpca.nmr_flatten(carray)
+        rarray = utils.nmr_flatten(carray)
 
         self.assertEqual((3, 4), tuple(rarray.shape))
         self.assertEqual(np.dtype('f4'), rarray.dtype)
@@ -26,7 +29,7 @@ class TestFlatten(unittest.TestCase):
     def test_double(self):
         carray = np.ones((2, 3), dtype='c16')
 
-        rarray = nmrpca.nmr_flatten(carray)
+        rarray = utils.nmr_flatten(carray)
 
         self.assertEqual((3, 4), tuple(rarray.shape))
         self.assertEqual(np.dtype('f8'), rarray.dtype)
@@ -34,7 +37,7 @@ class TestFlatten(unittest.TestCase):
     def test_flatten(self):
         carray = np.ones((2, 3, 4), dtype='c8')
 
-        rarray = nmrpca.nmr_flatten(carray)
+        rarray = utils.nmr_flatten(carray)
 
         self.assertEqual((12, 4), tuple(rarray.shape))
 
@@ -44,8 +47,8 @@ class TestFlatten(unittest.TestCase):
 
         carray = realpart + 1j * imagpart
 
-        rarray = nmrpca.nmr_flatten(carray)
-        carray2 = nmrpca.nmr_rebuild(rarray)
+        rarray = utils.nmr_flatten(carray)
+        carray2 = utils.nmr_rebuild(rarray)
 
         assert_array_equal(carray2, np.reshape(carray, (5, 12)))
 
@@ -55,8 +58,8 @@ class TestFlatten(unittest.TestCase):
 
         carray = realpart + 1j * imagpart
 
-        rarray = nmrpca.nmr_flatten(carray)
-        carray2 = nmrpca.nmr_rebuild(rarray, (4, 3))
+        rarray = utils.nmr_flatten(carray)
+        carray2 = utils.nmr_rebuild(rarray, (4, 3))
 
         assert_array_equal(carray2, carray)
 
