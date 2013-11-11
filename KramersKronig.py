@@ -31,3 +31,20 @@ class SimpleKK:
 
     def __call__(self, realdata):
         return realdata + 1j * self.imag(realdata)
+
+
+class MatrixKK:
+    """Implementing the Kramers-Kronig calculation by matrix multiplication"""
+
+    def __init__(self, N):
+        c, r = np.ogrid[0:N, 0:N]  # row and column range vectors
+        diaggrid = r - c  # NxN grid, kth diagonal = k
+        # N.B. 1 / diaggrid would give a divide-by-zero error
+        # Using a complex grid with 1/1=1 real on the diagonal
+        self._matrix = 1 / (np.eye(N) + 1j * np.pi * diaggrid)
+
+    def imag(self, realdata):
+        return np.dot(self._matrix.imag, realdata)
+
+    def __call__(self, realdata):
+        return np.dot(self._matrix, realdata)
