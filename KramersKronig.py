@@ -11,7 +11,7 @@ data according to the Kramers-Kronig relationships.
 import numpy as np
 
 
-class simpleKK:
+class SimpleKK:
     """A naive implementation of the Kramers-Kronig relationship"""
 
     def __init__(self):
