@@ -9,6 +9,7 @@ data according to the Kramers-Kronig relationships.
 """
 
 import numpy as np
+from numpy.lib.stride_tricks import as_strided
 
 
 class SimpleKK:
@@ -48,3 +49,16 @@ class MatrixKK:
 
     def __call__(self, realdata):
         return np.dot(self._matrix, realdata)
+
+
+class StrideTricksMatrixKK(MatrixKK):
+    """Build the internal matrix in a compressed format using stride_tricks"""
+
+    def __init__(self, N):
+        flat = 1j * np.pi * np.arange((1 - N), N)
+        flat[N - 1] = 1
+        flat = 1 / flat
+
+        dtsz = flat.dtype.itemsize
+        self._matrix = np.flipud(as_strided(flat, shape=(N, N),
+                                            strides=(dtsz, dtsz)))
