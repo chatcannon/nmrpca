@@ -19,6 +19,7 @@ class SimpleKK:
         pass
 
     def imag(self, realdata):
+        """Return the imaginary part corresponding to a given real part"""
 
         imagdata = np.zeros_like(realdata)
         npts = realdata.shape[0]
@@ -31,6 +32,7 @@ class SimpleKK:
         return imagdata
 
     def __call__(self, realdata):
+        """Return the full complex data corresponding to the real input"""
         return realdata + 1j * self.imag(realdata)
 
 
@@ -45,9 +47,11 @@ class MatrixKK:
         self._matrix = 1 / (np.eye(N) + 1j * np.pi * diaggrid)
 
     def imag(self, realdata):
+        """Return the imaginary part corresponding to a given real part"""
         return np.dot(self._matrix.imag, realdata)
 
     def __call__(self, realdata):
+        """Return the full complex data corresponding to the real input"""
         return np.dot(self._matrix, realdata)
 
 
