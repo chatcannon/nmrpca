@@ -25,7 +25,7 @@ class SimpleKK:
         for i in range(npts):
             for j in range(npts):
                 if (i != j):
-                    imagdata[i] += realdata[j] / (np.pi * (i-j))
+                    imagdata[i] += realdata[j] / (np.pi * (j - i))
 
         return imagdata
 
@@ -38,7 +38,7 @@ class MatrixKK:
 
     def __init__(self, N):
         c, r = np.ogrid[0:N, 0:N]  # row and column range vectors
-        diaggrid = r - c  # NxN grid, kth diagonal = k
+        diaggrid = c - r  # NxN grid, kth diagonal = -k
         # N.B. 1 / diaggrid would give a divide-by-zero error
         # Using a complex grid with 1/1=1 real on the diagonal
         self._matrix = 1 / (np.eye(N) + 1j * np.pi * diaggrid)

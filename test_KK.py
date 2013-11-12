@@ -18,7 +18,7 @@ def test_SimpleKK_delta():
 
     imagdata = sKK.imag(realdata)
 
-    assert_allclose(imagdata, np.array([-0.5, -1, 0, 1, 0.5]) / np.pi)
+    assert_allclose(imagdata, np.array([0.5, 1, 0, -1, -0.5]) / np.pi)
     assert_array_equal(realdata + 1j * imagdata, sKK(realdata))
 
 
