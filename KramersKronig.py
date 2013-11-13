@@ -8,8 +8,11 @@ This module contains classes for transforming real data into imaginary
 data according to the Kramers-Kronig relationships.
 """
 
+from __future__ import division
+
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
+from scipy.signal import fftconvolve
 
 
 class SimpleKK:
@@ -66,3 +69,21 @@ class StrideTricksMatrixKK(MatrixKK):
         dtsz = flat.dtype.itemsize
         self._matrix = np.flipud(as_strided(flat, shape=(N, N),
                                             strides=(dtsz, dtsz)))
+
+
+class ConvolveKK(SimpleKK):
+
+    def __init__(self, N):
+        self.N = N
+        quarter_vec = (1.0 / (np.pi * np.arange(N - 1, N//2, -1)) -
+                       1.0 / (np.pi * np.arange(1, N//2)))
+
+        self.conv_vec = np.zeros((2*N - 1,))
+        self.conv_vec[:N//2 - 1] = quarter_vec
+        self.conv_vec[N-1:N//2:-1] = -quarter_vec
+        self.conv_vec[N:3*N//2 - 1] = quarter_vec
+        self.conv_vec[-1:3*N//2:-1] = -quarter_vec
+
+    def imag(self, realdata):
+        assert (self.N,) == realdata.shape
+        return fftconvolve(self.conv_vec, realdata, mode='valid')
