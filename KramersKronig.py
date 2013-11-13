@@ -59,7 +59,7 @@ class StrideTricksMatrixKK(MatrixKK):
     """Build the internal matrix in a compressed format using stride_tricks"""
 
     def __init__(self, N):
-        flat = 1j * np.pi * np.arange((1 - N), N)
+        flat = -1j * np.pi * np.arange((1 - N), N)
         flat[N - 1] = 1
         flat = 1 / flat
 
