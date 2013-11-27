@@ -80,9 +80,9 @@ class ConvolveKK(SimpleKK):
 
         self.conv_vec = np.zeros((2*N - 1,))
         self.conv_vec[:N//2 - 1] = quarter_vec
-        self.conv_vec[N-1:N//2:-1] = -quarter_vec
+        self.conv_vec[N//2:N - 1] = -quarter_vec[::-1]
         self.conv_vec[N:3*N//2 - 1] = quarter_vec
-        self.conv_vec[-1:3*N//2:-1] = -quarter_vec
+        self.conv_vec[3*N//2:] = -quarter_vec[::-1]
 
     def imag(self, realdata):
         assert (self.N,) == realdata.shape
