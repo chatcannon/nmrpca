@@ -11,6 +11,8 @@ data according to the Kramers-Kronig relationships.
 from __future__ import division
 
 import numpy as np
+from numpy.dual import fft, ifft
+from numpy.fft import fftshift
 from numpy.lib.stride_tricks import as_strided
 from scipy.signal import fftconvolve
 
@@ -87,3 +89,15 @@ class ConvolveKK(SimpleKK):
     def imag(self, realdata):
         assert (self.N,) == realdata.shape
         return fftconvolve(self.conv_vec, realdata, mode='valid')
+
+class fftKK(SimpleKK):
+
+    def imag(self, realdata):
+        N = realdata.shape[0]
+        fid_guess = ifft(fftshift(realdata))
+        return fftshift(fft(fid_guess * np.linspace(-1j, 1j, N))).real
+
+    def __call__(self, realdata):
+        N = realdata.shape[0]
+        fid_guess = ifft(fftshift(realdata))
+        return fftshift(fft(fid_guess * np.linspace(2, 0, N)))
