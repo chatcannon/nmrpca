@@ -37,3 +37,6 @@ nosetests.xml
 
 # Local setup file to %run when starting ipython
 localsetup.py
+
+## Data files for testing
+testdata

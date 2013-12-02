@@ -90,14 +90,24 @@ class ConvolveKK(SimpleKK):
         assert (self.N,) == realdata.shape
         return fftconvolve(self.conv_vec, realdata, mode='valid')
 
+
 class fftKK(SimpleKK):
 
     def imag(self, realdata):
         N = realdata.shape[0]
+        tweak_fid = np.linspace(-1j, 1j, N, endpoint=False)
+        tweak_fid[0] = 0
         fid_guess = ifft(fftshift(realdata))
-        return fftshift(fft(fid_guess * np.linspace(-1j, 1j, N))).real
+        return fftshift(fft(fid_guess * tweak_fid)).real
 
     def __call__(self, realdata):
         N = realdata.shape[0]
+        ## Not sure which of these ways of calculating tweak_fid is best
+        ## TODO: test them out more thoroughly
+        tweak_fid = np.empty((N,), dtype=float)
+        tweak_fid[0] = 1
+        tweak_fid[1:] = np.linspace(2, 0, N - 1, endpoint=True)        
+        #tweak_fid = np.linspace(2, 0, N, endpoint=False)
+        #tweak_fid[0] = 1
         fid_guess = ifft(fftshift(realdata))
-        return fftshift(fft(fid_guess * np.linspace(2, 0, N)))
+        return fftshift(fft(fid_guess * tweak_fid))
