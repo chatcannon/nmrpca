@@ -1,9 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Created on Wed Oct 30 17:50:43 2013
 
 @author: cjk34
 """
+
+from __future__ import division
 
 import numpy as np
 
@@ -40,7 +41,7 @@ def nmr_rebuild(nmrdata, sample_shape=None):
     data suitable for further processing e.g. by Fourier Transform
     """
 
-    npts = int(nmrdata.shape[1] / 2)  # Python 3 gives float, need int for numpy
+    npts = nmrdata.shape[1] // 2
     nmrdata = nmrdata.T[:npts, :] + 1j * nmrdata.T[npts:, :]
 
     if sample_shape is not None:
