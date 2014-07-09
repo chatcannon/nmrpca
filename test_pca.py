@@ -1,4 +1,3 @@
-from nose import SkipTest
 from nose.tools import assert_almost_equal, assert_sequence_equal
 
 import numpy as np
