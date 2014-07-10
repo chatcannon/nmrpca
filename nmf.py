@@ -55,11 +55,16 @@ class NMFConstraint(Constraint):
 class NMFConstraint_NormaliseH(NMFConstraint):
     """Classic NMF except the H vectors are normalised"""
 
+    def __init__(self, max_normalisation_factor=1e3):
+        self.max_norm_fac = max_normalisation_factor
+
     def normalise(self, W, H, copy=False):
         if copy:
             W = np.copy(W)
             H = np.copy(H)
         Hnorm = linalg.norm(H, axis=1)
+        Hnorm[Hnorm > self.max_norm_fac] = self.max_norm_fac
+        Hnorm[Hnorm < 1/self.max_norm_fac] = 1/self.max_norm_fac
         H /= Hnorm[:, None]
         W *= Hnorm[None, :]
         return W, H
@@ -73,8 +78,22 @@ def svd_initialise(X, n_components, constraint):
     W = U[:, :n_components] * np.sqrt(S[None, :n_components])
     H = V[:n_components, :] * np.sqrt(S[:n_components, None])
 
-    W = constraint.project_W(W)
-    H = constraint.project_H(H)
+    # Pick the best out of the positive and negative parts of each component
+    # (This is NMF specific - TODO work out a more general approach)
+    Wp = constraint.project_W(W, copy=True)
+    Wm = constraint.project_W(-W, copy=True)
+    Hp = constraint.project_H(H, copy=True)
+    Hm = constraint.project_H(-H, copy=True)
+    for i in range(n_components):
+        pnorm = linalg.norm(Wp[:, i]) * linalg.norm(Hp[i, :])
+        mnorm = linalg.norm(Wm[:, i]) * linalg.norm(Hm[i, :])
+        if pnorm >= mnorm:
+            W[:, i] = Wp[:, i]
+            H[i, :] = Hp[i, :]
+        else:
+            W[:, i] = Wm[:, i]
+            H[i, :] = Hm[i, :]
+
     W, H = constraint.normalise(W, H)
     return W, H
 
