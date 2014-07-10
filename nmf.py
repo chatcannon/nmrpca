@@ -70,6 +70,30 @@ class NMFConstraint_NormaliseH(NMFConstraint):
         return W, H
 
 
+class ComplexMFConstraint(Constraint):
+    """H is still constrained to be positive real, W can take any value"""
+
+    def project_H(self, H, copy=False):
+        if copy:
+            H = np.copy(H)
+        H.imag = 0  # Keep only the real part
+        H[H.real <= 0] = 0  # Use <= 0 to set negative 0 to positive 0
+        return H
+
+    # No constraint on W
+
+    def normalise(self, W, H, copy=False):
+        if copy:
+            W = np.copy(W)
+            H = np.copy(H)
+        Hnorm = linalg.norm(H, axis=1)
+#        Hnorm[Hnorm > self.max_norm_fac] = self.max_norm_fac
+#        Hnorm[Hnorm < 1/self.max_norm_fac] = 1/self.max_norm_fac
+        H /= Hnorm[:, None]
+        W *= Hnorm[None, :]
+        return W, H
+
+
 def svd_initialise(X, n_components, constraint):
     """Calculate a starting point for the generalised NMF fit
 
