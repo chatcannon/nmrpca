@@ -292,3 +292,9 @@ class ProjectedGradientNMF:
         """
         self.fit_transform(X, **params)
         return self
+
+
+class NMF(ProjectedGradientNMF):
+    def __init__(self, n_components, tol=1e-4, max_iter=200):
+        constraint = NMFConstraint()
+        super(NMF, self).__init__(n_components, constraint, tol, max_iter)

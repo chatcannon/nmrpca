@@ -3,8 +3,7 @@ from nose.tools import assert_sequence_equal
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_less
 
-# from .nmf import NMF
-from sklearn.decomposition.nmf import NMF
+from .nmf import NMF
 
 
 def randn_complex(*shape):
@@ -36,7 +35,7 @@ def test_NMF_real():
     X = np.dot(W, H)
     assert_array_less(0, X)  # X is strictly greater than 0
 
-    p = NMF(n_components, tol=1e-5)
+    p = NMF(n_components, tol=1e-5, max_iter=10000)
     Wcalc = p.fit_transform(X)
     Hcalc = p.components_
     Xcalc = np.dot(Wcalc, Hcalc)
