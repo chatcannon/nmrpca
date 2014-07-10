@@ -213,54 +213,7 @@ def projgrad_subproblem(V, W, H, project, sigma=0.01, beta=0.1):
     return H, grad
 
 
-class ProjectedGradientNMF:
-    """Non-Negative matrix factorization by Projected Gradient (NMF)
-
-    Parameters
-    ----------
-    n_components : int
-        Number of components, if n_components is not set all components
-        are kept
-
-    constraint : instance of a Constraint subclass
-        Constraint on possible values of W and H
-
-    tol : double, default: 1e-4
-        Tolerance value used in stopping conditions.
-
-    max_iter : int, default: 200
-        Number of iterations to compute.
-
-    Attributes
-    ----------
-    `components_` : array, [n_components, n_features]
-        Non-negative components of the data.
-
-    `reconstruction_err_` : number
-        Frobenius norm of the matrix difference between
-        the training data and the reconstructed data from
-        the fit produced by the model. ``|| X - WH ||_2``
-
-    References
-    ----------
-    This implements
-
-    C.-J. Lin. Projected gradient methods
-    for non-negative matrix factorization. Neural
-    Computation, 19(2007), 2756-2779.
-    http://www.csie.ntu.edu.tw/~cjlin/nmf/
-
-    P. Hoyer. Non-negative Matrix Factorization with
-    Sparseness Constraints. Journal of Machine Learning
-    Research 2004.
-
-    NNDSVD is introduced in
-
-    C. Boutsidis, E. Gallopoulos: SVD based
-    initialization: A head start for nonnegative
-    matrix factorization - Pattern Recognition, 2008
-    http://tinyurl.com/nndsvd
-    """
+class BaseMF:
 
     def __init__(self, n_components, constraint, tol=1e-4, max_iter=200):
         self.n_components = n_components
@@ -268,21 +221,11 @@ class ProjectedGradientNMF:
         self.tol = tol
         self.max_iter = max_iter
 
+    # TODO create separate mixin classes allowing different initialisation
+    # strategies
     def _init(self, X):
         W, H = svd_initialise(X, self.n_components, self.constraint)
         return W, H
-
-    def _update_W(self, X, H, W):
-        def project_WT(WT):
-            W = self.constraint.project_W(WT.T)
-            return W.T
-
-        WT, gradWT = projgrad_subproblem(X.T, H.T, W.T, project_WT)
-        return WT.T, gradWT.T
-
-    def _update_H(self, X, H, W):
-        H, gradH = projgrad_subproblem(X, W, H, self.constraint.project_H)
-        return H, gradH
 
     def fit_transform(self, X, y=None):
         """Learn a NMF model for the data X and returns the transformed data.
@@ -349,6 +292,87 @@ class ProjectedGradientNMF:
         """
         self.fit_transform(X, **params)
         return self
+
+
+class ProjectedGradientNMF(BaseMF):
+    """Non-Negative matrix factorization by Projected Gradient (NMF)
+
+    Parameters
+    ----------
+    n_components : int
+        Number of components, if n_components is not set all components
+        are kept
+
+    constraint : instance of a Constraint subclass
+        Constraint on possible values of W and H
+
+    tol : double, default: 1e-4
+        Tolerance value used in stopping conditions.
+
+    max_iter : int, default: 200
+        Number of iterations to compute.
+
+    Attributes
+    ----------
+    `components_` : array, [n_components, n_features]
+        Non-negative components of the data.
+
+    `reconstruction_err_` : number
+        Frobenius norm of the matrix difference between
+        the training data and the reconstructed data from
+        the fit produced by the model. ``|| X - WH ||_2``
+
+    References
+    ----------
+    This implements
+
+    C.-J. Lin. Projected gradient methods
+    for non-negative matrix factorization. Neural
+    Computation, 19(2007), 2756-2779.
+    http://www.csie.ntu.edu.tw/~cjlin/nmf/
+
+    P. Hoyer. Non-negative Matrix Factorization with
+    Sparseness Constraints. Journal of Machine Learning
+    Research 2004.
+
+    NNDSVD is introduced in
+
+    C. Boutsidis, E. Gallopoulos: SVD based
+    initialization: A head start for nonnegative
+    matrix factorization - Pattern Recognition, 2008
+    http://tinyurl.com/nndsvd
+    """
+
+    def _update_W(self, X, H, W):
+        def project_WT(WT):
+            W = self.constraint.project_W(WT.T)
+            return W.T
+
+        WT, gradWT = projgrad_subproblem(X.T, H.T, W.T, project_WT)
+        return WT.T, gradWT.T
+
+    def _update_H(self, X, H, W):
+        H, gradH = projgrad_subproblem(X, W, H, self.constraint.project_H)
+        return H, gradH
+
+
+class PinvNMF(BaseMF):
+    """Uses pseudo inverse rather than projected gradient to do the updates"""
+
+    def _update_W(self, X, H, W):
+        Hinv = linalg.pinv(H)
+        W_ideal = np.dot(X, Hinv)
+        Wdiff = W_ideal - W
+        W = self.constraint.project_W(W_ideal)
+        return W, Wdiff
+
+    def _update_H(self, X, H, W):
+        Winv = linalg.pinv(W)
+        H_ideal = np.dot(Winv, X)
+        Hdiff = H_ideal - H
+        H = self.constraint.project_H(H_ideal)
+        # Maybe do a line search?
+        return H, Hdiff
 
 
 class NMF(ProjectedGradientNMF):

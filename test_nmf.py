@@ -109,8 +109,7 @@ def test_NMF_complex():
 
     X = np.dot(W, H)
 
-    p = nmf.ProjectedGradientNMF(n_components, nmf.ComplexMFConstraint(),
-                                 max_iter=1000)
+    p = nmf.PinvNMF(n_components, nmf.ComplexMFConstraint(), max_iter=1000)
     Wcalc = p.fit_transform(X)
     Hcalc = p.components_
     Xcalc = np.dot(Wcalc, Hcalc)
