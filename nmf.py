@@ -16,6 +16,8 @@ Factorise complex matrices with bounds on the factors
 #
 # License: BSD 3 clause
 
+import warnings
+
 import numpy as np
 from numpy import linalg
 
@@ -303,8 +305,10 @@ class ProjectedGradientNMF:
 
         W, H = self._init(X)
 
+        Xnorm = linalg.norm(X)
+        old_error = linalg.norm(X - np.dot(W, H))
+
         for n_iter in range(1, self.max_iter + 1):
-            # No stopping condition for now
 
             # update W
             W, gradW = self._update_W(X, H, W)
@@ -315,7 +319,16 @@ class ProjectedGradientNMF:
             # Adjust the normalisation of W and H
             W, H = self.constraint.normalise(W, H)
 
-        error = linalg.norm(X - np.dot(W, H))
+            error = linalg.norm(X - np.dot(W, H))
+            if error < self.tol * Xnorm:
+                break
+            elif error > old_error:
+                warnings.warn("Error is getting worse")
+                break
+            elif error > old_error * (1 - self.tol):
+                # Error is decreasing very slowly
+                break
+            old_error = error
 
         self.reconstruction_err_ = error
         self.components_ = H
