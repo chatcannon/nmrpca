@@ -269,12 +269,13 @@ class ProjectedGradientNMF:
             # update H
             H, gradH = self._update_H(X, H, W)
 
+            # Adjust the normalisation of W and H
+            W, H = self.constraint.normalise(W, H)
+
         error = linalg.norm(X - np.dot(W, H))
 
         self.reconstruction_err_ = error
-
         self.components_ = H
-
         return W
 
     def fit(self, X, y=None, **params):
