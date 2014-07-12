@@ -3,7 +3,7 @@ from nose.tools import assert_almost_equal, assert_sequence_equal
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 
-from . import pca
+from .. import pca
 
 
 def assert_almost_diagonal(A, assert_real=False):

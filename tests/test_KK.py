@@ -6,9 +6,9 @@ Created on Mon Nov 11 18:28:45 2013
 """
 
 import numpy as np
-from numpy.testing import assert_array_equal, assert_allclose, assert_array_almost_equal
+from numpy.testing import assert_array_equal, assert_allclose
 
-from .KramersKronig import SimpleKK, MatrixKK, StrideTricksMatrixKK, fftKK
+from ..KramersKronig import SimpleKK, MatrixKK, StrideTricksMatrixKK, fftKK
 
 
 def test_SimpleKK_delta():

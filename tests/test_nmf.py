@@ -4,7 +4,7 @@ import numpy as np
 from numpy.testing import (assert_array_almost_equal, assert_array_less,
                            assert_array_equal)
 
-from . import nmf
+from .. import nmf
 
 
 def randn_complex(*shape):

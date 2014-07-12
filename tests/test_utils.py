@@ -10,10 +10,7 @@ import unittest
 import numpy as np
 from numpy.testing.utils import assert_array_equal
 
-if __name__ == '__main__':
-    import utils
-else:  # nosetests etc
-    from . import utils
+from .. import utils
 
 
 class TestFlatten(unittest.TestCase):
