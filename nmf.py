@@ -213,7 +213,7 @@ def projgrad_subproblem(V, W, H, project, sigma=0.01, beta=0.1):
     return H, grad
 
 
-class BaseMF:
+class BaseMF(object):
 
     def __init__(self, n_components, constraint, tol=1e-4, max_iter=200):
         self.n_components = n_components
