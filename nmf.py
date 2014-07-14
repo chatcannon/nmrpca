@@ -118,7 +118,26 @@ class FIDConstraint(Constraint):
         H *= KKfactor[None, :]
         return H
 
-    # No constraint on W
+    def project_W(self, W, copy=False):
+        """The phase of each component should be similar
+
+        TODO: have some way of parametrising the permissible variation"""
+        angle_limit = np.pi / 4
+        angle_limit_wrap = 2 * np.pi - angle_limit
+
+        if copy:
+            W = np.copy(W)
+        Wsum = np.sum(W)
+        Wfrac = W / Wsum
+        Warg = np.angle(Wfrac)
+        Wabs = np.abs(W)
+
+        arg_too_high = np.logical_and(Warg > angle_limit, Warg <= np.pi)
+        arg_too_low = np.logical_and(Warg > np.pi,  Warg < angle_limit_wrap)
+        W[arg_too_high] = Wabs[arg_too_high] * np.exp(1j * angle_limit)
+        W[arg_too_low] = Wabs[arg_too_low] * np.exp(1j * angle_limit_wrap)
+
+        return W
 
     def normalise(self, W, H, copy=False):
         if copy:

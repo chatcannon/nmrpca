@@ -128,7 +128,7 @@ def test_NMF_complex():
 #    assert_array_almost_equal(W, Wcalc)
 
 
-def test_FIDConstraint():
+def test_FIDConstraint_H():
     n_features = 20
     n_components = 3
 
@@ -146,3 +146,18 @@ def test_FIDConstraint():
     Hc2 = fidc.project_H(H)
     assert_array_almost_equal(Hc, Hc2)
     assert Hc2 is H
+
+
+def test_FIDConstraint_W():
+    n_samples = 20
+    n_components = 5
+
+    fidc = nmf.FIDConstraint()
+    W = randn_complex(n_samples, n_components) + 10j
+    Worig = np.copy(W)
+
+    Wc = fidc.project_W(W, copy=True)
+    assert_array_equal(W, Worig)
+    # phase must be (almost) between pi/4 and 3pi/4
+    assert_array_less(0.24 * np.pi, np.angle(Wc))
+    assert_array_less(np.angle(Wc), 0.76 * np.pi)
