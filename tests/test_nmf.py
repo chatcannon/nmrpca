@@ -13,7 +13,7 @@ def randn_complex(*shape):
     r.imag = np.random.randn(*shape)
     return r
 
-
+EPS = 1e-7
 MAX_NEGATIVE_FLOAT = -5e-324
 
 
@@ -126,3 +126,23 @@ def test_NMF_complex():
     assert_array_almost_equal(X, Xcalc, decimal=3)
 #    assert_array_almost_equal(H, Hcalc)
 #    assert_array_almost_equal(W, Wcalc)
+
+
+def test_FIDConstraint():
+    n_features = 20
+    n_components = 3
+
+    fidc = nmf.FIDConstraint()
+    H = randn_complex(n_components, n_features)
+    Horig = np.copy(H)
+
+    Hc = fidc.project_H(H, copy=True)
+    assert_array_equal(H, Horig)
+    Hft = np.dual.fft(Hc, axis=1)
+    assert_array_less(-EPS, Hft.real)
+    # TODO check full KK relation; just check it sums to 0 for now
+    assert_array_almost_equal(0, np.sum(Hft.imag, axis=1))
+
+    Hc2 = fidc.project_H(H)
+    assert_array_almost_equal(Hc, Hc2)
+    assert Hc2 is H

@@ -115,7 +115,7 @@ class FIDConstraint(Constraint):
         N = H.shape[1]
         KKfactor = np.linspace(2, 0, N, endpoint=False)
         KKfactor[0] = 1
-        H *= KKfactor
+        H *= KKfactor[None, :]
         return H
 
     # No constraint on W
