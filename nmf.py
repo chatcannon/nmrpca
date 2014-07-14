@@ -20,6 +20,7 @@ import warnings
 
 import numpy as np
 from numpy import linalg
+from np.dual import fft, ifft
 
 
 class Constraint:
@@ -81,6 +82,40 @@ class ComplexMFConstraint(Constraint):
         H.imag = 0  # Keep only the real part
         H[H.real <= 0] = 0  # Use <= 0 to set negative 0 to positive 0
         return H
+
+    # No constraint on W
+
+    def normalise(self, W, H, copy=False):
+        if copy:
+            W = np.copy(W)
+            H = np.copy(H)
+        Hnorm = linalg.norm(H, axis=1)
+#        Hnorm[Hnorm > self.max_norm_fac] = self.max_norm_fac
+#        Hnorm[Hnorm < 1/self.max_norm_fac] = 1/self.max_norm_fac
+        H /= Hnorm[:, None]
+        W *= Hnorm[None, :]
+        return W, H
+
+
+class FIDConstraint(Constraint):
+    """Constraint for matrix factorisation of NMR Free Induction Decays
+
+    The real part of the frequency space spectrum should be non-negative, and
+    the imaginary part should be related to the real part by the Kramers-
+    Kronig formula."""
+
+    def project_H(self, H, copy=False):
+        Hft = fft(H, axis=1)
+        Hft.imag = 0  # Keep only the real part
+        Hft[Hft.real <= 0] = 0
+        if copy:
+            H = ifft(Hft, axis=1)
+        else:
+            H[:, :] = ifft(Hft, axis=1)
+        N = H.shape[1]
+        KKfactor = np.linspace(2, 0, N, endpoint=False)
+        KKfactor[0] = 1
+        H *= KKfactor
 
     # No constraint on W
 
