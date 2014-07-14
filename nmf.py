@@ -20,7 +20,7 @@ import warnings
 
 import numpy as np
 from numpy import linalg
-from np.dual import fft, ifft
+from numpy.dual import fft, ifft
 
 
 class Constraint:
