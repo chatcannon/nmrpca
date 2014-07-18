@@ -152,11 +152,11 @@ def test_FIDConstraint_H():
     assert Hc2 is H
 
 
-def test_FIDConstraint_W():
-    n_samples = 20
-    n_components = 5
+def test_PhaseRange_W():
+    n_samples = 200
+    n_components = 50
 
-    fidc = nmf.FIDConstraint()
+    fidc = nmf.PhaseRangeFIDConstraint(np.pi / 4)
     W = randn_complex(n_samples, n_components)
     W += (1j - np.mean(W))  # make the average value to be 1j
     Worig = np.copy(W)
@@ -169,4 +169,6 @@ def test_FIDConstraint_W():
 
     # Check that the projection is idempotent
     Wcc = fidc.project_W(Wc, copy=True)
-    assert_array_almost_equal(Wc, Wcc)
+    # Projection changes the mean, and the mean is used as the centre of the
+    # range, so projection is only approximately idempotent
+    assert_array_almost_equal(Wc, Wcc, decimal=2)

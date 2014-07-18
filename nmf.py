@@ -118,26 +118,6 @@ class FIDConstraint(Constraint):
         H *= KKfactor[None, :]
         return H
 
-    def project_W(self, W, copy=False):
-        """The phase of each component should be similar
-
-        TODO: have some way of parametrising the permissible variation"""
-        angle_limit = np.pi / 4
-
-        if copy:
-            W = np.copy(W)
-        Wsum = np.sum(W)
-        Wfrac = W / Wsum
-        Warg = np.angle(Wfrac)
-        Wabs = np.abs(Wfrac)
-
-        arg_too_high = (Warg > angle_limit)
-        arg_too_low = (Warg < -angle_limit)
-        W[arg_too_high] = Wsum * Wabs[arg_too_high] * np.exp(1j * angle_limit)
-        W[arg_too_low] = Wsum * Wabs[arg_too_low] * np.exp(-1j * angle_limit)
-
-        return W
-
     def normalise(self, W, H, copy=False):
         if copy:
             W = np.copy(W)
@@ -148,6 +128,29 @@ class FIDConstraint(Constraint):
         H /= Hnorm[:, None]
         W *= Hnorm[None, :]
         return W, H
+
+
+class PhaseRangeFIDConstraint(FIDConstraint):
+    def __init__(self, angle_limit=np.pi/4):
+        self.angle_limit = angle_limit
+
+    def project_W(self, W, copy=False):
+        """The phase of each component should be similar"""
+        if copy:
+            W = np.copy(W)
+        Wsum = np.sum(W)
+        Wfrac = W / Wsum
+        Warg = np.angle(Wfrac)
+        Wfabs = np.abs(Wfrac)
+
+        arg_too_high = (Warg > self.angle_limit)
+        arg_too_low = (Warg < -self.angle_limit)
+        Wleft = Wsum * np.exp(1j * self.angle_limit)
+        Wright = Wsum * np.exp(-1j * self.angle_limit)
+        W[arg_too_high] = Wleft * Wfabs[arg_too_high]
+        W[arg_too_low] = Wright * Wfabs[arg_too_low]
+
+        return W
 
 
 def svd_initialise(X, n_components, constraint):
