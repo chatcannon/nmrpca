@@ -143,6 +143,10 @@ def test_FIDConstraint_H():
     # TODO check full KK relation; just check it sums to 0 for now
     assert_array_almost_equal(0, np.sum(Hft.imag, axis=1))
 
+    # Check that the projection is idempotent
+    Hcc = fidc.project_H(Hc, copy=True)
+    assert_array_almost_equal(Hc, Hcc)
+
     Hc2 = fidc.project_H(H)
     assert_array_almost_equal(Hc, Hc2)
     assert Hc2 is H
@@ -161,3 +165,7 @@ def test_FIDConstraint_W():
     # phase must be (almost) between pi/4 and 3pi/4
     assert_array_less(0.24 * np.pi, np.angle(Wc))
     assert_array_less(np.angle(Wc), 0.76 * np.pi)
+
+    # Check that the projection is idempotent
+    Wcc = fidc.project_W(Wc, copy=True)
+    assert_array_almost_equal(Wc, Wcc)
