@@ -153,6 +153,21 @@ class PhaseRangeFIDConstraint(FIDConstraint):
         return W
 
 
+class SamplePhaseFIDConstraint(FIDConstraint):
+    """For a given sample, all components should have the same phase"""
+
+    def project_W(self, W, copy=False):
+        # No need to copy
+        Wsum = np.sum(W, axis=1)
+        Wfrac = W / Wsum[:, None]
+        Wproj = Wfrac.real
+        Wproj[Wproj < 0] = 0
+
+        W = Wsum[:, None] * Wproj
+
+        return W
+
+
 def svd_initialise(X, n_components, constraint):
     """Calculate a starting point for the generalised NMF fit
 

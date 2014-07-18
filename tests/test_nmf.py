@@ -172,3 +172,26 @@ def test_PhaseRange_W():
     # Projection changes the mean, and the mean is used as the centre of the
     # range, so projection is only approximately idempotent
     assert_array_almost_equal(Wc, Wcc, decimal=2)
+
+
+def test_SamplePhase_W():
+    n_samples = 200
+    n_components = 50
+
+    fidc = nmf.SamplePhaseFIDConstraint()
+    W = randn_complex(n_samples, n_components)
+    W += (1j - np.mean(W))  # make the average value to be 1j
+    Worig = np.copy(W)
+
+    Wc = fidc.project_W(W, copy=True)
+    assert_array_equal(W, Worig)
+    # phase must be (almost) the same for all components of a sample
+    # however some elements are zero so we can't use the simple option
+    Wsum = np.sum(Wc, axis=1)
+    assert_array_almost_equal(np.abs(Wc + Wsum[:, None]),
+                              np.abs(Wc) + np.abs(Wsum[:, None]))
+
+    # Check that the projection is idempotent
+    Wcc = fidc.project_W(Wc, copy=True)
+    assert Wcc is not Wc  # Check that they aren't the same array
+    assert_array_almost_equal(Wc, Wcc)
