@@ -270,11 +270,13 @@ def projgrad_subproblem(V, W, H, project, sigma=0.01, beta=0.1):
 
 class BaseMF(object):
 
-    def __init__(self, n_components, constraint, tol=1e-4, max_iter=200):
+    def __init__(self, n_components, constraint, tol=1e-4, max_iter=200,
+                 verbose=False):
         self.n_components = n_components
         self.constraint = constraint
         self.tol = tol
         self.max_iter = max_iter
+        self.verbose = verbose
 
     # TODO create separate mixin classes allowing different initialisation
     # strategies
@@ -318,6 +320,8 @@ class BaseMF(object):
             W, H = self.constraint.normalise(W, H)
 
             error = linalg.norm(X - np.dot(W, H))
+            if self.verbose:
+                print(n_iter, old_error, error)
             if error < self.tol * Xnorm:
                 break
             elif error > old_error:
