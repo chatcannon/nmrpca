@@ -123,19 +123,18 @@ class FIDConstraint(Constraint):
 
         TODO: have some way of parametrising the permissible variation"""
         angle_limit = np.pi / 4
-        angle_limit_wrap = 2 * np.pi - angle_limit
 
         if copy:
             W = np.copy(W)
         Wsum = np.sum(W)
         Wfrac = W / Wsum
         Warg = np.angle(Wfrac)
-        Wabs = np.abs(W)
+        Wabs = np.abs(Wfrac)
 
-        arg_too_high = np.logical_and(Warg > angle_limit, Warg <= np.pi)
-        arg_too_low = np.logical_and(Warg > np.pi,  Warg < angle_limit_wrap)
-        W[arg_too_high] = Wabs[arg_too_high] * np.exp(1j * angle_limit)
-        W[arg_too_low] = Wabs[arg_too_low] * np.exp(1j * angle_limit_wrap)
+        arg_too_high = (Warg > angle_limit)
+        arg_too_low = (Warg < -angle_limit)
+        W[arg_too_high] = Wsum * Wabs[arg_too_high] * np.exp(1j * angle_limit)
+        W[arg_too_low] = Wsum * Wabs[arg_too_low] * np.exp(-1j * angle_limit)
 
         return W
 

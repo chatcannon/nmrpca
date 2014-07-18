@@ -157,7 +157,8 @@ def test_FIDConstraint_W():
     n_components = 5
 
     fidc = nmf.FIDConstraint()
-    W = randn_complex(n_samples, n_components) + 10j
+    W = randn_complex(n_samples, n_components)
+    W += (1j - np.mean(W))  # make the average value to be 1j
     Worig = np.copy(W)
 
     Wc = fidc.project_W(W, copy=True)
