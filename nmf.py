@@ -168,6 +168,57 @@ class SamplePhaseFIDConstraint(FIDConstraint):
         return W
 
 
+class BogusExtraFIDConstraint(FIDConstraint):
+
+    def project_W(self, W, copy=False):
+        """The phase of each component should be similar
+
+        TODO: have some way of parametrising the permissible variation"""
+        angle_limit = np.pi / 4
+        angle_limit_wrap = 2 * np.pi - angle_limit
+
+#        # Get the average phase for each sample and overall
+#        sample_sum = np.sum(W, axis=1)
+#        sample_phase = sample_sum / np.abs(sample_sum)
+#        Wsum = np.sum(sample_sum)
+#        Wphase = Wsum / np.abs(Wsum)
+#        
+#        # each sample's relative phase
+
+#        Wsum = np.sum(W)
+#        Wfrac = W / Wsum
+#        Warg = np.angle(Wfrac)
+#        Wabs = np.abs(Wfrac)
+#        wWabs = Wabs * np.minimum(1, (1 + np.cos(Warg)) /
+#                                     (1 + np.cos(angle_limit)))
+#
+#        arg_too_high = np.logical_and(Warg > angle_limit, Warg <= np.pi)
+#        arg_too_low = np.logical_and(Warg > np.pi,  Warg < angle_limit_wrap)
+#        W[arg_too_high] = Wsum * wWabs[arg_too_high] * np.exp(1j * angle_limit)
+#        W[arg_too_low] = Wsum * wWabs[arg_too_low] * np.exp(1j * angle_limit_wrap)
+
+        Wsum = np.sum(W, axis=1)
+        Wfrac = W / Wsum[:, None]
+        projWfrac = Wfrac.real
+#        pwfmax = np.max(projWfrac, axis=0)
+#        pwfmin = np.min(projWfrac, axis=0)
+#        pwfmin *= (pwfmin < 0)
+#        projWfrac = (projWfrac - pwfmin) * pwfmax / (pwfmax - pwfmin)
+        
+#        # Make sure the median is at least 0
+#        pwfmed = np.median(projWfrac, axis=0)
+#        pwfmed[pwfmed > 0] = 0
+#        projWfrac += pwfmed[None, :]
+#        projWfrac[projWfrac < 0] = 0
+#        W = Wsum[:, None] * projWfrac
+        
+#        Wabs = np.abs(W)
+#        Wsumabs = np.abs(Wsum)
+#        W = (W + Wsum[:, None]) * Wabs / (Wabs + Wsumabs[:, None])
+
+        return W
+
+
 def svd_initialise(X, n_components, constraint):
     """Calculate a starting point for the generalised NMF fit
 
@@ -435,19 +486,42 @@ class ProjectedGradientNMF(BaseMF):
 class PinvNMF(BaseMF):
     """Uses pseudo inverse rather than projected gradient to do the updates"""
 
-    def _update_W(self, X, H, W):
+    def _update_W(self, X, H, W_old, beta=0.5):
+        # TODO find a faster way than calculating the norm of X - WH every time
+        old_score = linalg.norm(X - np.dot(W_old, H))
+
         Hinv = linalg.pinv(H)
         W_ideal = np.dot(X, Hinv)
-        Wdiff = W_ideal - W
-        W = self.constraint.project_W(W_ideal)
+        Wdiff = W_ideal - W_old
+
+        # Line search for an W that improves the score
+        for i in range(10):
+            alpha = beta ** i
+            W = self.constraint.project_W(W_old + alpha * Wdiff)
+            new_score = linalg.norm(X - np.dot(W, H))
+            if self.verbose:
+                print('W', i, old_score, new_score)
+            if new_score <= old_score:
+                break
         return W, Wdiff
 
-    def _update_H(self, X, H, W):
+    def _update_H(self, X, H_old, W, beta=0.5):
+        # TODO find a faster way than calculating the norm of X - WH every time
+        old_score = linalg.norm(X - np.dot(W, H_old))
+
         Winv = linalg.pinv(W)
         H_ideal = np.dot(Winv, X)
-        Hdiff = H_ideal - H
-        H = self.constraint.project_H(H_ideal)
-        # Maybe do a line search?
+        Hdiff = H_ideal - H_old
+
+        # Line search for an H that improves the score
+        for i in range(10):
+            alpha = beta ** i
+            H = self.constraint.project_H(H_old + alpha * Hdiff)
+            new_score = linalg.norm(X - np.dot(W, H))
+            if self.verbose:
+                print('H', i, old_score, new_score)
+            if new_score <= old_score:
+                break
         return H, Hdiff
 
 
