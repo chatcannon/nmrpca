@@ -219,6 +219,41 @@ class BogusExtraFIDConstraint(FIDConstraint):
         return W
 
 
+class SpectrumConstraint(Constraint):
+    """Constraint for matrix factorisation of NMR Spectra
+
+    The real part of the frequency space spectrum should be non-negative, and
+    the imaginary part should be related to the real part by the Kramers-
+    Kronig formula."""
+
+    def project_H(self, H, copy=False):
+        N = H.shape[1]
+        if copy:
+            H = np.copy(H)
+        H.imag = 0  # Keep only the real part
+        H.real[H.real <= 0] = 0
+
+        # Do the Kramers-Kronig convolution
+        Hft = ifft(H, axis=1)
+        KKfactor = np.linspace(2, 0, N, endpoint=False)
+        KKfactor[0] = 1
+        Hft *= KKfactor[None, :]
+        H = fft(Hft, axis=1)
+
+        # Zero out small negative numbers caused by rounding errors
+        H.real[H.real <= 0] = 0
+        return H
+
+    def normalise(self, W, H, copy=False):
+        if copy:
+            W = np.copy(W)
+            H = np.copy(H)
+        Hnorm = linalg.norm(H, axis=1)
+        H /= Hnorm[:, None]
+        W *= Hnorm[None, :]
+        return W, H
+
+
 def svd_initialise(X, n_components, constraint):
     """Calculate a starting point for the generalised NMF fit
 

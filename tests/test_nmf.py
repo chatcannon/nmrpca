@@ -195,3 +195,26 @@ def test_SamplePhase_W():
     Wcc = fidc.project_W(Wc, copy=True)
     assert Wcc is not Wc  # Check that they aren't the same array
     assert_array_almost_equal(Wc, Wcc)
+
+
+def test_SpectrumConstraint_H():
+    n_features = 20
+    n_components = 3
+
+    specc = nmf.SpectrumConstraint()
+    H = randn_complex(n_components, n_features)
+    Horig = np.copy(H)
+
+    Hc = specc.project_H(H, copy=True)
+    assert_array_equal(H, Horig)
+    assert_array_less(MAX_NEGATIVE_FLOAT, Hc.real)
+    # TODO check full KK relation; just check it sums to 0 for now
+    assert_array_almost_equal(0, np.sum(Hc.imag, axis=1))
+    # Check that the positive parts of H.real are conserved
+    Hreal = np.copy(Horig.real)
+    Hreal[Hreal <= 0] = 0
+    assert_array_almost_equal(Hreal, Hc.real)
+
+    # Check that the projection is idempotent
+    Hcc = specc.project_H(Hc, copy=True)
+    assert_array_almost_equal(Hc, Hcc)
