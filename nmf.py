@@ -153,7 +153,7 @@ class PhaseRangeFIDConstraint(FIDConstraint):
         return W
 
 
-class SamplePhaseFIDConstraint(FIDConstraint):
+class SamplePhaseConstraint(Constraint):
     """For a given sample, all components should have the same phase"""
 
     def project_W(self, W, copy=False):
@@ -252,6 +252,14 @@ class SpectrumConstraint(Constraint):
         H /= Hnorm[:, None]
         W *= Hnorm[None, :]
         return W, H
+
+
+class SamplePhaseFIDConstraint(SamplePhaseConstraint, FIDConstraint):
+    pass
+
+
+class SamplePhaseSpecConstraint(SamplePhaseConstraint, SpectrumConstraint):
+    pass
 
 
 def svd_initialise(X, n_components, constraint):
