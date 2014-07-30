@@ -290,6 +290,45 @@ def svd_initialise(X, n_components, constraint):
     return W, H
 
 
+def NMR_svd_initialise(X, n_components, FT=False):
+    """Calculate a starting point for the generalised NMF fit of NMR
+
+    Does a standard NNDSVD (as used in standard NMF) on the real part of the
+    (approximately phased) NMR spectrum"""
+
+    if FT:
+        X = fft(X, axis=1)
+    Xsum = np.sum(X, axis=1)
+    Xphase = Xsum / np.abs(Xsum)
+    Xreal = (X / Xphase[:, None]).real
+
+    U, S, V = linalg.svd(Xreal, full_matrices=False)
+    W = U[:, :n_components] * S[None, :n_components]
+    H = V[:n_components, :]
+
+    Wp = W * (W > 0)
+    Wm = -W * (W < 0)
+    Hp = H * (H > 0)
+    Hm = -H * (H < 0)
+    for i in range(n_components):
+        pnorm = linalg.norm(Wp[:, i]) * linalg.norm(Hp[i, :])
+        mnorm = linalg.norm(Wm[:, i]) * linalg.norm(Hm[i, :])
+        if pnorm >= mnorm:
+            W[:, i] = Wp[:, i]
+            H[i, :] = Hp[i, :]
+        else:
+            W[:, i] = Wm[:, i]
+            H[i, :] = Hm[i, :]
+
+    W *= Xphase[:, None]
+    if FT:
+        H = ifft(H, axis=1)
+        Hnorm = linalg.norm(H, axis=1)
+        H /= Hnorm[:, None]
+        W *= Hnorm[None, :]
+    return W, H
+
+
 def projgrad_subproblem(V, W, H, project, sigma=0.01, beta=0.1):
     """Non-negative least square solver
 
@@ -382,12 +421,13 @@ def projgrad_subproblem(V, W, H, project, sigma=0.01, beta=0.1):
 class BaseMF(object):
 
     def __init__(self, n_components, constraint, tol=1e-4, max_iter=200,
-                 verbose=False):
+                 verbose=False, initialiser=svd_initialise):
         self.n_components = n_components
         self.constraint = constraint
         self.tol = tol
         self.max_iter = max_iter
         self.verbose = verbose
+        self.initialiser = initialiser
 
     # TODO create separate mixin classes allowing different initialisation
     # strategies
