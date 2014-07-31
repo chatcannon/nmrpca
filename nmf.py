@@ -290,17 +290,15 @@ def svd_initialise(X, n_components, constraint):
     return W, H
 
 
-def NMR_svd_initialise(X, n_components, FT=False):
+def realpart_svd_initialise(X, n_components):
     """Calculate a starting point for the generalised NMF fit of NMR
 
     Does a standard NNDSVD (as used in standard NMF) on the real part of the
     (approximately phased) NMR spectrum"""
 
-    if FT:
-        X = fft(X, axis=1)
-    Xsum = np.sum(X, axis=1)
+    Xsum = np.sum(X, axis=1, keepdims=True)
     Xphase = Xsum / np.abs(Xsum)
-    Xreal = (X / Xphase[:, None]).real
+    Xreal = np.real(X / Xphase)
 
     U, S, V = linalg.svd(Xreal, full_matrices=False)
     W = U[:, :n_components] * S[None, :n_components]
@@ -320,12 +318,31 @@ def NMR_svd_initialise(X, n_components, FT=False):
             W[:, i] = Wm[:, i]
             H[i, :] = Hm[i, :]
 
-    W *= Xphase[:, None]
+    H = np.array(H, dtype=complex)
+    W = np.array(W, dtype=complex) * Xphase
+    return W, H
+
+
+def NMR_svd_initialise(X, n_components, constraint):
+    """Calculate a starting point for the generalised NMF fit of NMR
+
+    Does a standard NNDSVD (as used in standard NMF) on the real part of the
+    (approximately phased) NMR spectrum. If the constraint is a FIDconstraint,
+    Fourier transforms the X array so the NNDSVD is done on the spectrum."""
+
+    if isinstance(constraint, FIDConstraint):
+        FT = True
+    else:
+        FT = False
+
+    if FT:
+        X = fft(X, axis=1)
+    W, H = realpart_svd_initialise(X, n_components)
     if FT:
         H = ifft(H, axis=1)
-        Hnorm = linalg.norm(H, axis=1)
-        H /= Hnorm[:, None]
-        W *= Hnorm[None, :]
+
+    H = constraint.project_H(H)  # Need to add back in the imaginary part
+    W, H = constraint.normalise(W, H)
     return W, H
 
 
@@ -429,10 +446,8 @@ class BaseMF(object):
         self.verbose = verbose
         self.initialiser = initialiser
 
-    # TODO create separate mixin classes allowing different initialisation
-    # strategies
     def _init(self, X):
-        W, H = svd_initialise(X, self.n_components, self.constraint)
+        W, H = self.initialiser(X, self.n_components, self.constraint)
         return W, H
 
     def fit_transform(self, X, y=None):
