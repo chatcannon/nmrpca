@@ -584,7 +584,13 @@ class ProjectedGradientNMF(BaseMF):
 class PinvNMF(BaseMF):
     """Uses pseudo inverse rather than projected gradient to do the updates"""
 
-    def _update_W(self, X, H, W_old, beta=0.5):
+    def __init__(self, n_components, constraint, tol=1e-4, max_iter=200,
+                 verbose=False, initialiser=svd_initialise, beta=0.5):
+        super(PinvNMF, self).__init__(n_components, constraint, tol, max_iter,
+                                      verbose, initialiser)
+        self.beta = beta
+
+    def _update_W(self, X, H, W_old):
         # TODO find a faster way than calculating the norm of X - WH every time
         old_score = linalg.norm(X - np.dot(W_old, H))
 
@@ -594,7 +600,7 @@ class PinvNMF(BaseMF):
 
         # Line search for an W that improves the score
         for i in range(10):
-            alpha = beta ** i
+            alpha = self.beta ** i
             W = self.constraint.project_W(W_old + alpha * Wdiff)
             new_score = linalg.norm(X - np.dot(W, H))
             if self.verbose:
@@ -603,13 +609,18 @@ class PinvNMF(BaseMF):
                 break
         return W, Wdiff
 
-    def _update_H(self, X, H_old, W, beta=0.5):
+    def _update_H(self, X, H_old, W):
         # TODO find a faster way than calculating the norm of X - WH every time
         old_score = linalg.norm(X - np.dot(W, H_old))
 
         Winv = linalg.pinv(W)
         H_ideal = np.dot(Winv, X)
         Hdiff = H_ideal - H_old
+
+        if isinstance(self.beta, np.ndarray):
+            beta = self.beta[:, None]
+        else:
+            beta = self.beta
 
         # Line search for an H that improves the score
         for i in range(10):
