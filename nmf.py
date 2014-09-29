@@ -104,8 +104,12 @@ class FIDConstraint(Constraint):
     the imaginary part should be related to the real part by the Kramers-
     Kronig formula."""
 
-    def project_H(self, H, copy=False):
+    def project_H(self, H, copy=False, phase=False):
         Hft = fft(H, axis=1)
+        if phase:
+            Hsum = np.sum(Hft, axis=1)
+            Hphase = Hsum / np.abs(Hsum)
+            Hft /= Hphase[:, None]
         Hft.imag = 0  # Keep only the real part
         Hft[Hft.real <= 0] = 0
         if copy:
@@ -116,7 +120,10 @@ class FIDConstraint(Constraint):
         KKfactor = np.linspace(2, 0, N, endpoint=False)
         KKfactor[0] = 1
         H *= KKfactor[None, :]
-        return H
+        if phase:
+            return H, Hphase
+        else:
+            return H
 
     def normalise(self, W, H, copy=False):
         if copy:
