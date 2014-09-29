@@ -125,6 +125,7 @@ class FIDConstraint(Constraint):
         Hnorm = linalg.norm(H, axis=1)
 #        Hnorm[Hnorm > self.max_norm_fac] = self.max_norm_fac
 #        Hnorm[Hnorm < 1/self.max_norm_fac] = 1/self.max_norm_fac
+        Hnorm[Hnorm == 0] = 1  # Avoid divide-by-zero
         H /= Hnorm[:, None]
         W *= Hnorm[None, :]
         return W, H
