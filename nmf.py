@@ -249,6 +249,7 @@ class SpectrumConstraint(Constraint):
             W = np.copy(W)
             H = np.copy(H)
         Hnorm = linalg.norm(H, axis=1)
+        Hnorm[Hnorm == 0] = 1  # Avoid divide-by-zero
         H /= Hnorm[:, None]
         W *= Hnorm[None, :]
         return W, H
